@@ -1,10 +1,15 @@
 let express = require('express'),
-  path = require('path'),
-  mongoose = require('mongoose'),
-  cors = require('cors'),
-  bodyParser = require('body-parser'),
-  dataBaseConfig = require('./database/db');
-  const createError = require('http-errors');
+path = require('path'),
+mongoose = require('mongoose'),
+cors = require('cors'),
+bodyParser = require('body-parser'),
+hateoasLinker = require('express-hateoas-links'),
+dataBaseConfig = require('./database/db');
+const createError = require('http-errors');
+
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 // Connecting mongoDB
 mongoose.Promise = global.Promise;
@@ -14,18 +19,18 @@ mongoose.connect(dataBaseConfig.db, {
   useFindAndModify: false,
   useUnifiedTopology: true
 }).then(() => {
-    console.log('Database connected sucessfully ')
+    console.log('Database connected sucessfully ');
   },
   error => {
-    console.log('Could not connected to database : ' + error)
+    console.log('Could not connected to database : ' + error);
   }
 )
 
 
 // Set up express js port
-//const studentRoute = require('./routes/student.route')
-const gatewayRoute = require('./routes/gateway.route')
-const peripheralRoute = require('./routes/peripheral.route')
+const gatewayRoute = require('./routes/gateway.route');
+const peripheralRoute = require('./routes/peripheral.route');
+const mainRoute = require('./routes/main.route');
 
 const app = express();
 app.use(bodyParser.json());
@@ -34,19 +39,23 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(cors());
 
+//Hateoas
+app.use(hateoasLinker);
+
 // Setting up static directory
 app.use(express.static(path.join(__dirname, 'dist/frontend')));
 
 
 // RESTful API root
-app.use('/api', gatewayRoute)
-app.use('/api', peripheralRoute)
+app.use('/', mainRoute);
+app.use('/api', gatewayRoute);
+app.use('/api', peripheralRoute);
 
 // PORT
 const port = process.env.PORT || 8000;
 
 app.listen(port, () => {
-  console.log('Connected to port ' + port)
+  console.log('Connected to port ' + port);
 })
 
 // Find 404 and hand over to error handler

@@ -1,7 +1,16 @@
 const express = require('express');
 const ip = require('ip');
-//const app = express();
 const peripheralRoute = express.Router();
+const host = process.env.host + ':' + process.env.PORT;
+const ENDPOINT = host + '/' + process.env.ENDPOINT_NAME;
+
+let hypertext = [
+  { rel: "create", method: "POST", title: 'Create a Peripheral', href: ENDPOINT + '/peripheral' },
+  { rel: "list", method: "GET", title: 'List Peripherals', href: ENDPOINT + '/peripherals' },
+  { rel: "update", method: "PUT", title: 'Update a Peripheral', href: ENDPOINT + '/peripheral/{ID}' },
+  { rel: "get", method: "GET", title: 'Get a Peripheral', href: ENDPOINT + '/peripheral/{ID}' },
+  { rel: "delete", method: "DELETE", title: 'Delete a Peripheral', href: ENDPOINT + '/peripheral/{ID}' },
+]
 
 
 // Peripheral model
@@ -20,19 +29,16 @@ peripheralRoute.route('/peripheral').post((req, res, next) => {
       if(peripherals.length > 10){
         return res.json({error: true, msg: "The system only permit 10 peripherals per gateway."});
       }
-      else{
-              
+      else{ 
           Peripheral.create(req.body, (error, data) => {
             if (error) {
               return next(error)
             } else {
-              res.json(data)
+              hypertext.unshift({ rel: "self", method: "POST", href: ENDPOINT + '/peripheral' });
+              hypertext.splice(1, 1);
+              res.json(data, hypertext);
             }
           });
-        
-        
-          
-        
       }
     }
   })
@@ -42,9 +48,9 @@ peripheralRoute.route('/peripheral').post((req, res, next) => {
 peripheralRoute.route('/peripherals').get((req, res) => {
   Peripheral.find((error, data) => {
     if (error) {
-      return next(error)
+      return next(error);
     } else {
-      res.json(data)
+      res.json(data);
     }
   })
 })
@@ -55,7 +61,9 @@ peripheralRoute.route('/peripheral/:id').get((req, res) => {
     if (error) {
       return next(error)
     } else {
-      res.json(data)
+      hypertext.unshift({ rel: "self", method: "GET", href: ENDPOINT + '/peripheral' });
+      hypertext.splice(4, 1);
+      res.json(data, hypertext)
     }
   })
 })
@@ -68,10 +76,10 @@ peripheralRoute.route('/peripheral/:id').put((req, res, next) => {
   }, (error, data) => {
     if (error) {
       return next(error);
-      console.log(error)
     } else {
-      res.json(data)
-      console.log('Peripheral successfully updated!')
+      hypertext.unshift({ rel: "self", method: "PUT", href: ENDPOINT + '/peripheral' });
+      hypertext.splice(3, 1);
+      res.json(data, hypertext);
     }
   })
 })
