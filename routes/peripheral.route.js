@@ -26,7 +26,7 @@ peripheralRoute.route('/peripheral').post((req, res, next) => {
       return next(er)
     }
     else{      
-      if(peripherals.length > 10){
+      if(peripherals.length > 9){
         return res.json({error: true, msg: "The system only permit 10 peripherals per gateway."});
       }
       else{ 
